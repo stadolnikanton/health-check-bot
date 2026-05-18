@@ -2,6 +2,8 @@ import asyncio
 import json
 import logging
 import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import httpx
 from aiogram import Bot, Dispatcher, html
@@ -12,7 +14,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID"))
+ADMIN_CHAT_ID_ENV = os.getenv("ADMIN_CHAT_ID")
+ADMIN_CHAT_ID = int(ADMIN_CHAT_ID_ENV) if ADMIN_CHAT_ID_ENV else None
 
 HEALTH_URL = "https://health-check.stadolnik.site/health"
 
@@ -21,7 +24,6 @@ server_is_healthy = True
 
 
 async def check_server_status() -> tuple[bool, str]:
-    """Вспомогательная функция для опроса сервера."""
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(HEALTH_URL, timeout=5.0)
@@ -51,13 +53,13 @@ async def command_start_handler(message: Message) -> None:
     print(f"User ID: {message.from_user.id}")
     await message.answer(
         f"Привет, {message.from_user.full_name}!\n"
-        f"Я слежу за сервером каждую минуту. Ты можешь проверить его вручную через /check."
+        f"Я слежу за сервером каждую минуту. Ты можете проверить его вручную через /check."
     )
 
 
 @dp.message(Command("check"))
 async def check_health_handler(message: Message) -> None:
-    if message.from_user.id != ADMIN_CHAT_ID:
+    if not ADMIN_CHAT_ID or message.from_user.id != ADMIN_CHAT_ID:
         await message.answer(
             f"Привет, {message.from_user.full_name}!\n"
             f"У вас нет доступа к этой информации."
@@ -73,7 +75,6 @@ async def check_health_handler(message: Message) -> None:
 
 
 async def auto_monitor_task(bot: Bot) -> None:
-    """Фоновая задача, которая опрашивает сервер раз в минуту."""
     global server_is_healthy
 
     await asyncio.sleep(5)
@@ -115,4 +116,21 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
+
+    class HealthCheckHandler(BaseHTTPRequestHandler):
+
+        def do_GET(self):
+            self.send_response(200)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"OK")
+
+        def log_message(self, format, *args):
+            return
+
+    port = int(os.getenv("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    print(f"Фейковый веб-сервер успешно запущен на порту {port}")
+
     asyncio.run(main())
