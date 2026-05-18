@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from aiogram import F, Router
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
 
 from config.config import ADMIN_CHAT_ID
@@ -20,32 +23,36 @@ async def check_health_handler(message: Message) -> None:
     status_icon = (
         "🟢 <b>Сервер доступен!</b>" if is_ok else "🔴 <b>Сервер недоступен!</b>"
     )
+    current_time = datetime.now().strftime("%H:%M:%S")
+
     await waiting_msg.edit_text(
-        f"{status_icon}\n{details}",
+        f"{status_icon}\n\n{details}\n\n🕒 <i>Проверено в: {current_time}</i>",
         parse_mode="HTML",
-        reply_markup=get_monitor_keyboard(),  # Прикрепляем кнопку
+        reply_markup=get_monitor_keyboard(),
     )
 
 
-# Обработка нажатия на инлайн-кнопку
 @router.callback_query(F.data == "refresh_status")
 async def refresh_status_callback(callback: CallbackQuery) -> None:
     if not ADMIN_CHAT_ID or callback.from_user.id != ADMIN_CHAT_ID:
         await callback.answer("Доступ запрещен", show_alert=True)
         return
 
-    # Менять текст на тот же самый нельзя (aiogram выкинет ошибку),
-    # поэтому сначала покажем анимацию загрузки в самом Телеграме
     await callback.answer("Обновляю...")
 
     is_ok, details = await check_server_status()
     status_icon = (
         "🟢 <b>Сервер доступен!</b>" if is_ok else "🔴 <b>Сервер недоступен!</b>"
     )
+    current_time = datetime.now().strftime("%H:%M:%S")
 
-    # Редактируем текущее сообщение, обновляя данные и оставляя кнопку
-    await callback.message.edit_text(
-        f"{status_icon}\n{details}",
-        parse_mode="HTML",
-        reply_markup=get_monitor_keyboard(),
-    )
+    # Оборачиваем в try-except на случай непредвиденных таймингов
+    try:
+        await callback.message.edit_text(
+            f"{status_icon}\n\n{details}\n\n🕒 <i>Проверено в: {current_time}</i>",
+            parse_mode="HTML",
+            reply_markup=get_monitor_keyboard(),
+        )
+    except TelegramBadRequest:
+        # Если вдруг текст совпал один в один, бот просто проигнорирует ошибку
+        pass
