@@ -7,13 +7,13 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from aiogram import Bot, Dispatcher
 
 from config.config import TOKEN
-from handlers import common, monitor
+from handlers import common, monitor, monitor_resurse
 from tasks.auto_monitor import auto_monitor_task
 
 dp = Dispatcher()
 
 # Регистрируем роутеры из наших модулей
-dp.include_routers(common.router, monitor.router)
+dp.include_routers(common.router, monitor.router, monitor_resurse.router)
 
 
 async def main() -> None:
