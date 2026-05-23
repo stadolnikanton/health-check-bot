@@ -45,7 +45,9 @@ async def refresh_status_callback(callback: CallbackQuery) -> None:
     status_icon = (
         "🟢 <b>Сервер доступен!</b>" if is_ok else "🔴 <b>Сервер недоступен!</b>"
     )
-    current_time = datetime.now().strftime("%H:%M:%S")
+    
+    tz_minsk = timezone(timedelta(hours=3))
+    current_time = datetime.now(tz_minsk).strftime("%H:%M:%S")
 
     # Оборачиваем в try-except на случай непредвиденных таймингов
     try:
