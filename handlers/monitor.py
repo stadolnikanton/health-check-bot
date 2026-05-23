@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
@@ -23,7 +23,8 @@ async def check_health_handler(message: Message) -> None:
     status_icon = (
         "🟢 <b>Сервер доступен!</b>" if is_ok else "🔴 <b>Сервер недоступен!</b>"
     )
-    current_time = datetime.now().strftime("%H:%M:%S")
+    tz_minsk = timezone(timedelta(hours=3))
+    current_time = datetime.now(tz_minsk).strftime("%H:%M:%S")
 
     await waiting_msg.edit_text(
         f"{status_icon}\n\n{details}\n\n🕒 <i>Проверено в: {current_time}</i>",
