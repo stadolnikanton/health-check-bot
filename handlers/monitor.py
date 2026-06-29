@@ -11,7 +11,7 @@ from services.checker import check_server_status
 
 router = Router()
 
-@router.message(or_f(F.text == "Статус сервера"), Command("check"))
+@router.message(or_f(F.text.lower() == "Статус сервера"), Command("/check"))
 async def check_health_handler(message: Message) -> None:
     if not ADMIN_CHAT_ID or message.from_user.id != ADMIN_CHAT_ID:
         await message.answer("У вас нет доступа к этой информации.")
