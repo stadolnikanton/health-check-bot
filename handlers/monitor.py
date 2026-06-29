@@ -3,6 +3,7 @@ from datetime import datetime, timezone, timedelta
 from aiogram import F, Router
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.types import CallbackQuery, Message
+from aiogram.filters import Command, or_f
 
 from config.config import ADMIN_CHAT_ID
 from keyboards.inline import get_monitor_keyboard
@@ -10,8 +11,7 @@ from services.checker import check_server_status
 
 router = Router()
 
-
-@router.message(F.text == "/check")
+@router.message(or_f(F.text == "Статус сервера"), Command("check"))
 async def check_health_handler(message: Message) -> None:
     if not ADMIN_CHAT_ID or message.from_user.id != ADMIN_CHAT_ID:
         await message.answer("У вас нет доступа к этой информации.")
