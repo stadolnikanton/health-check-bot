@@ -3,13 +3,14 @@ from datetime import datetime, timezone, timedelta
 from aiogram import F, Router
 from aiogram.types import Message
 
+from aiogram.filters import Command, or_f
 from config.config import ADMIN_CHAT_ID
 from services.checker import check_server_resurse 
 
 router = Router()
 
 
-@router.message(F.text == "/resurse")
+@router.message(or_f(Command("resurse"), F.text.lower() == "ресурсы сервера"))
 async def check_health_handler(message: Message) -> None:
     if not ADMIN_CHAT_ID or message.from_user.id != ADMIN_CHAT_ID:
         await message.answer("У вас нет доступа к этой информации.")
