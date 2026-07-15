@@ -103,5 +103,5 @@ async def check_server_resurse() -> tuple[bool, str]:
         except httpx.ConnectTimeout:
             return False, "⏳ Ошибка: Превышено время ожидания (Timeout)."
         except httpx.RequestError as e:
-            safe_error = str(e.replace("<", "&lt;").replace(">", "&gt;"))
+            safe_error = str(e).replace("<", "&lt;").replace(">", "&gt;")
             return False, f"💥 Ошибка соединения: <code>{safe_error}</code>"
